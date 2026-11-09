@@ -1,25 +1,25 @@
-import React, { useState, useMemo } from 'react';
-import { 
-  Search, 
-  ArrowUpDown, 
-  ArrowUp, 
-  ArrowDown, 
-  Edit3, 
-  Trash2, 
-  FileSpreadsheet, 
-  Download, 
-  AlertTriangle, 
-  Eye, 
+import React, { useState, useMemo } from "react";
+import {
+  Search,
+  ArrowUpDown,
+  ArrowUp,
+  ArrowDown,
+  Edit3,
+  Trash2,
+  FileSpreadsheet,
+  Download,
+  AlertTriangle,
+  Eye,
   Filter,
   CheckCircle2,
   Calendar,
   Layers,
   LayoutGrid,
-  Table as TableIcon
-} from 'lucide-react';
-import { ProductItem, FilterStatusOption } from '../types';
-import { formatarDataBR, getExpirationInfo } from '../utils/dateUtils';
-import { exportarParaExcel, exportarParaCSV } from '../services/exportService';
+  Table as TableIcon,
+} from "lucide-react";
+import { ProductItem, FilterStatusOption } from "../types";
+import { formatarDataBR, getExpirationInfo } from "../utils/dateUtils";
+import { exportarParaExcel, exportarParaCSV } from "../services/exportService";
 
 interface SpreadsheetTableProps {
   itens: ProductItem[];
@@ -30,8 +30,8 @@ interface SpreadsheetTableProps {
   onVisualizarFoto: (fotoUrl: string) => void;
 }
 
-type SortField = 'validade' | 'descricao' | 'quantidade' | 'diasRestantes';
-type SortOrder = 'asc' | 'desc';
+type SortField = "validade" | "descricao" | "quantidade" | "diasRestantes";
+type SortOrder = "asc" | "desc";
 
 export const SpreadsheetTable: React.FC<SpreadsheetTableProps> = ({
   itens,
@@ -39,29 +39,29 @@ export const SpreadsheetTable: React.FC<SpreadsheetTableProps> = ({
   onFiltrarStatus,
   onEditar,
   onExcluir,
-  onVisualizarFoto
+  onVisualizarFoto,
 }) => {
-  const [busca, setBusca] = useState('');
-  const [sortField, setSortField] = useState<SortField>('validade');
-  const [sortOrder, setSortOrder] = useState<SortOrder>('asc');
-  const [viewMode, setViewMode] = useState<'table' | 'cards'>('table');
+  const [busca, setBusca] = useState("");
+  const [sortField, setSortField] = useState<SortField>("validade");
+  const [sortOrder, setSortOrder] = useState<SortOrder>("asc");
+  const [viewMode, setViewMode] = useState<"table" | "cards">("table");
 
   // Alterna ordenação
   const handleSort = (field: SortField) => {
     if (sortField === field) {
-      setSortOrder(prev => (prev === 'asc' ? 'desc' : 'asc'));
+      setSortOrder((prev) => (prev === "asc" ? "desc" : "asc"));
     } else {
       setSortField(field);
-      setSortOrder('asc');
+      setSortOrder("asc");
     }
   };
 
   // Filtragem e Ordenação
   const itensProcessados = useMemo(() => {
-    let filtrados = itens.filter(item => {
+    let filtrados = itens.filter((item) => {
       // Filtro de texto de busca
       const termo = busca.toLowerCase();
-      const bateBusca = 
+      const bateBusca =
         !busca ||
         item.descricao.toLowerCase().includes(termo) ||
         item.codigoBarras.toLowerCase().includes(termo) ||
@@ -72,35 +72,35 @@ export const SpreadsheetTable: React.FC<SpreadsheetTableProps> = ({
 
       // Filtro de status de validade
       const info = getExpirationInfo(item.validade);
-      if (filtroStatus === 'todos') return true;
-      if (filtroStatus === 'alerta_6m') return info.requerAtencao6Meses;
-      if (filtroStatus === 'invalidas') return info.status === 'invalida';
-      if (filtroStatus === 'vencidos') return info.status === 'vencido';
-      if (filtroStatus === 'critico_30') return info.status === 'critico_30';
-      if (filtroStatus === 'alerta_90') return info.status === 'alerta_90';
-      if (filtroStatus === 'atencao_180') return info.status === 'atencao_180';
-      if (filtroStatus === 'seguro') return info.status === 'seguro';
+      if (filtroStatus === "todos") return true;
+      if (filtroStatus === "alerta_6m") return info.requerAtencao6Meses;
+      if (filtroStatus === "invalidas") return info.status === "invalida";
+      if (filtroStatus === "vencidos") return info.status === "vencido";
+      if (filtroStatus === "critico_30") return info.status === "critico_30";
+      if (filtroStatus === "alerta_90") return info.status === "alerta_90";
+      if (filtroStatus === "atencao_180") return info.status === "atencao_180";
+      if (filtroStatus === "seguro") return info.status === "seguro";
 
       return true;
     });
 
     // Ordenação
     return filtrados.sort((a, b) => {
-      if (sortField === 'diasRestantes') {
+      if (sortField === "diasRestantes") {
         const dA = getExpirationInfo(a.validade).diasRestantes;
         const dB = getExpirationInfo(b.validade).diasRestantes;
-        return sortOrder === 'asc' ? dA - dB : dB - dA;
-      } else if (sortField === 'validade') {
+        return sortOrder === "asc" ? dA - dB : dB - dA;
+      } else if (sortField === "validade") {
         const vA = new Date(a.validade).getTime();
         const vB = new Date(b.validade).getTime();
-        return sortOrder === 'asc' ? vA - vB : vB - vA;
-      } else if (sortField === 'descricao') {
-        return sortOrder === 'asc' 
-          ? a.descricao.localeCompare(b.descricao) 
+        return sortOrder === "asc" ? vA - vB : vB - vA;
+      } else if (sortField === "descricao") {
+        return sortOrder === "asc"
+          ? a.descricao.localeCompare(b.descricao)
           : b.descricao.localeCompare(a.descricao);
-      } else if (sortField === 'quantidade') {
-        return sortOrder === 'asc' 
-          ? a.quantidade - b.quantidade 
+      } else if (sortField === "quantidade") {
+        return sortOrder === "asc"
+          ? a.quantidade - b.quantidade
           : b.quantidade - a.quantidade;
       }
       return 0;
@@ -123,7 +123,7 @@ export const SpreadsheetTable: React.FC<SpreadsheetTableProps> = ({
           />
           {busca && (
             <button
-              onClick={() => setBusca('')}
+              onClick={() => setBusca("")}
               className="absolute right-3 top-1/2 -translate-y-1/2 text-xs text-slate-400 hover:text-slate-600 font-bold"
             >
               ×
@@ -136,9 +136,11 @@ export const SpreadsheetTable: React.FC<SpreadsheetTableProps> = ({
           {/* Alternar entre visualização de Tabela e Cards */}
           <div className="flex items-center bg-slate-100 p-1 rounded-xl border border-slate-200">
             <button
-              onClick={() => setViewMode('table')}
+              onClick={() => setViewMode("table")}
               className={`p-1.5 rounded-lg text-xs font-medium flex items-center gap-1 transition ${
-                viewMode === 'table' ? 'bg-white text-slate-900 shadow-sm' : 'text-slate-500 hover:text-slate-800'
+                viewMode === "table"
+                  ? "bg-white text-slate-900 shadow-sm"
+                  : "text-slate-500 hover:text-slate-800"
               }`}
               title="Visualização em Planilha / Tabela"
             >
@@ -146,9 +148,11 @@ export const SpreadsheetTable: React.FC<SpreadsheetTableProps> = ({
               <span className="hidden sm:inline">Tabela</span>
             </button>
             <button
-              onClick={() => setViewMode('cards')}
+              onClick={() => setViewMode("cards")}
               className={`p-1.5 rounded-lg text-xs font-medium flex items-center gap-1 transition ${
-                viewMode === 'cards' ? 'bg-white text-slate-900 shadow-sm' : 'text-slate-500 hover:text-slate-800'
+                viewMode === "cards"
+                  ? "bg-white text-slate-900 shadow-sm"
+                  : "text-slate-500 hover:text-slate-800"
               }`}
               title="Visualização em Cards"
             >
@@ -181,12 +185,16 @@ export const SpreadsheetTable: React.FC<SpreadsheetTableProps> = ({
       {/* Indicador de Filtro Ativo */}
       <div className="px-4 py-2.5 bg-slate-50 border-b border-slate-100 flex items-center justify-between text-xs text-slate-600">
         <div className="flex items-center gap-2">
-          <span>Exibindo: <strong>{itensProcessados.length}</strong> de {itens.length} itens</span>
-          {filtroStatus !== 'todos' && (
+          <span>
+            Exibindo: <strong>{itensProcessados.length}</strong> de{" "}
+            {itens.length} itens
+          </span>
+          {filtroStatus !== "todos" && (
             <span className="px-2 py-0.5 rounded-md bg-amber-100 text-amber-800 border border-amber-300 font-semibold text-[11px] flex items-center gap-1">
-              Filtro ativo: {filtroStatus === 'alerta_6m' ? '≤ 6 Meses' : filtroStatus}
-              <button 
-                onClick={() => onFiltrarStatus('todos')}
+              Filtro ativo:{" "}
+              {filtroStatus === "alerta_6m" ? "≤ 6 Meses" : filtroStatus}
+              <button
+                onClick={() => onFiltrarStatus("todos")}
                 className="hover:text-amber-950 font-bold ml-1"
               >
                 ✕
@@ -203,10 +211,14 @@ export const SpreadsheetTable: React.FC<SpreadsheetTableProps> = ({
       {itensProcessados.length === 0 ? (
         <div className="p-12 text-center text-slate-400">
           <Calendar className="w-12 h-12 mx-auto mb-3 text-slate-300" />
-          <p className="text-base font-semibold text-slate-700">Nenhum produto encontrado</p>
-          <p className="text-xs text-slate-500 mt-1">Tente ajustar a busca ou limpar os filtros de status.</p>
+          <p className="text-base font-semibold text-slate-700">
+            Nenhum produto encontrado
+          </p>
+          <p className="text-xs text-slate-500 mt-1">
+            Tente ajustar a busca ou limpar os filtros de status.
+          </p>
         </div>
-      ) : viewMode === 'table' ? (
+      ) : viewMode === "table" ? (
         /* Visualização em Tabela Tradicional */
         <div className="overflow-x-auto">
           <table className="w-full text-left border-collapse">
@@ -214,41 +226,61 @@ export const SpreadsheetTable: React.FC<SpreadsheetTableProps> = ({
               <tr className="bg-slate-100/70 border-b border-slate-200 text-[11px] font-bold text-slate-600 uppercase tracking-wider">
                 <th className="py-3 px-4 w-12 text-center">Foto</th>
                 <th className="py-3 px-4">Código de Barras</th>
-                <th 
+                <th
                   className="py-3 px-4 cursor-pointer hover:bg-slate-200/60 transition"
-                  onClick={() => handleSort('descricao')}
+                  onClick={() => handleSort("descricao")}
                 >
                   <div className="flex items-center gap-1">
                     <span>Descrição</span>
-                    {sortField === 'descricao' && (sortOrder === 'asc' ? <ArrowUp className="w-3.5 h-3.5" /> : <ArrowDown className="w-3.5 h-3.5" />)}
+                    {sortField === "descricao" &&
+                      (sortOrder === "asc" ? (
+                        <ArrowUp className="w-3.5 h-3.5" />
+                      ) : (
+                        <ArrowDown className="w-3.5 h-3.5" />
+                      ))}
                   </div>
                 </th>
                 <th className="py-3 px-4">Lote</th>
-                <th 
+                <th
                   className="py-3 px-4 cursor-pointer hover:bg-slate-200/60 transition"
-                  onClick={() => handleSort('validade')}
+                  onClick={() => handleSort("validade")}
                 >
                   <div className="flex items-center gap-1">
                     <span>Validade</span>
-                    {sortField === 'validade' && (sortOrder === 'asc' ? <ArrowUp className="w-3.5 h-3.5" /> : <ArrowDown className="w-3.5 h-3.5" />)}
+                    {sortField === "validade" &&
+                      (sortOrder === "asc" ? (
+                        <ArrowUp className="w-3.5 h-3.5" />
+                      ) : (
+                        <ArrowDown className="w-3.5 h-3.5" />
+                      ))}
                   </div>
                 </th>
-                <th 
+                <th
                   className="py-3 px-4 text-center cursor-pointer hover:bg-slate-200/60 transition"
-                  onClick={() => handleSort('quantidade')}
+                  onClick={() => handleSort("quantidade")}
                 >
                   <div className="flex items-center justify-center gap-1">
                     <span>Qtd</span>
-                    {sortField === 'quantidade' && (sortOrder === 'asc' ? <ArrowUp className="w-3.5 h-3.5" /> : <ArrowDown className="w-3.5 h-3.5" />)}
+                    {sortField === "quantidade" &&
+                      (sortOrder === "asc" ? (
+                        <ArrowUp className="w-3.5 h-3.5" />
+                      ) : (
+                        <ArrowDown className="w-3.5 h-3.5" />
+                      ))}
                   </div>
                 </th>
-                <th 
+                <th
                   className="py-3 px-4 cursor-pointer hover:bg-slate-200/60 transition"
-                  onClick={() => handleSort('diasRestantes')}
+                  onClick={() => handleSort("diasRestantes")}
                 >
                   <div className="flex items-center gap-1">
                     <span>Prazo / Status</span>
-                    {sortField === 'diasRestantes' && (sortOrder === 'asc' ? <ArrowUp className="w-3.5 h-3.5" /> : <ArrowDown className="w-3.5 h-3.5" />)}
+                    {sortField === "diasRestantes" &&
+                      (sortOrder === "asc" ? (
+                        <ArrowUp className="w-3.5 h-3.5" />
+                      ) : (
+                        <ArrowDown className="w-3.5 h-3.5" />
+                      ))}
                   </div>
                 </th>
                 <th className="py-3 px-4 text-center">Alerta 6M</th>
@@ -261,10 +293,10 @@ export const SpreadsheetTable: React.FC<SpreadsheetTableProps> = ({
                 const isAlerta6M = expInfo.requerAtencao6Meses;
 
                 return (
-                  <tr 
-                    key={item.id} 
+                  <tr
+                    key={item.id}
                     className={`hover:bg-slate-50/80 transition-colors ${
-                      isAlerta6M ? 'bg-amber-50/20' : ''
+                      isAlerta6M ? "bg-amber-50/20" : ""
                     }`}
                   >
                     {/* Foto */}
@@ -275,7 +307,11 @@ export const SpreadsheetTable: React.FC<SpreadsheetTableProps> = ({
                           className="w-9 h-9 rounded-lg overflow-hidden border border-slate-300 shadow-sm inline-block hover:opacity-80 transition"
                           title="Clique para ampliar a foto do lote"
                         >
-                          <img src={item.fotoUrl} alt="Foto" className="w-full h-full object-cover" />
+                          <img
+                            src={item.fotoUrl}
+                            alt="Foto"
+                            className="w-full h-full object-cover"
+                          />
                         </button>
                       ) : (
                         <span className="w-9 h-9 rounded-lg bg-slate-100 text-slate-400 inline-flex items-center justify-center text-[10px]">
@@ -291,15 +327,21 @@ export const SpreadsheetTable: React.FC<SpreadsheetTableProps> = ({
                           {item.codigoBarras}
                         </span>
                       ) : (
-                        <span className="text-slate-400 italic">Sem código</span>
+                        <span className="text-slate-400 italic">
+                          Sem código
+                        </span>
                       )}
                     </td>
 
                     {/* Descrição & Categoria */}
                     <td className="py-2.5 px-4">
-                      <div className="font-bold text-slate-900 text-sm">{item.descricao}</div>
+                      <div className="font-bold text-slate-900 text-sm">
+                        {item.descricao}
+                      </div>
                       <div className="flex items-center gap-1.5 mt-0.5">
-                        <span className="text-[10px] text-slate-500">{item.categoria || 'Geral'}</span>
+                        <span className="text-[10px] text-slate-500">
+                          {item.categoria || "Geral"}
+                        </span>
                         {item.observacoes && (
                           <span className="text-[10px] text-slate-400 italic truncate max-w-xs">
                             • {item.observacoes}
@@ -331,8 +373,12 @@ export const SpreadsheetTable: React.FC<SpreadsheetTableProps> = ({
 
                     {/* Prazo / Status */}
                     <td className="py-2.5 px-4">
-                      <span className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-semibold border ${expInfo.colorClass.badge}`}>
-                        <span className={`w-2 h-2 rounded-full ${expInfo.colorClass.dot}`} />
+                      <span
+                        className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-semibold border ${expInfo.colorClass.badge}`}
+                      >
+                        <span
+                          className={`w-2 h-2 rounded-full ${expInfo.colorClass.dot}`}
+                        />
                         {expInfo.label}
                       </span>
                     </td>
@@ -341,8 +387,7 @@ export const SpreadsheetTable: React.FC<SpreadsheetTableProps> = ({
                     <td className="py-2.5 px-4 text-center">
                       {isAlerta6M ? (
                         <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded bg-amber-500 text-white font-bold text-[10px] shadow-sm">
-                          <AlertTriangle className="w-3 h-3" />
-                          ≤ 6 Meses
+                          <AlertTriangle className="w-3 h-3" />≤ 6 Meses
                         </span>
                       ) : (
                         <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded bg-emerald-100 text-emerald-800 font-semibold text-[10px]">
@@ -388,13 +433,17 @@ export const SpreadsheetTable: React.FC<SpreadsheetTableProps> = ({
               <div
                 key={item.id}
                 className={`p-4 rounded-xl border flex flex-col justify-between transition-all ${
-                  isAlerta6M ? 'bg-amber-50/30 border-amber-300' : 'bg-white border-slate-200'
+                  isAlerta6M
+                    ? "bg-amber-50/30 border-amber-300"
+                    : "bg-white border-slate-200"
                 }`}
               >
                 <div>
                   {/* Cabeçalho do Card */}
                   <div className="flex items-start justify-between gap-2 mb-2">
-                    <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full border ${expInfo.colorClass.badge}`}>
+                    <span
+                      className={`text-[10px] font-bold px-2 py-0.5 rounded-full border ${expInfo.colorClass.badge}`}
+                    >
                       {expInfo.label}
                     </span>
                     {isAlerta6M && (
@@ -404,26 +453,46 @@ export const SpreadsheetTable: React.FC<SpreadsheetTableProps> = ({
                     )}
                   </div>
 
-                  <h3 className="text-sm font-bold text-slate-900 mb-1">{item.descricao}</h3>
-                  <div className="text-[11px] text-slate-500 mb-3">{item.categoria || 'Geral'}</div>
+                  <h3 className="text-sm font-bold text-slate-900 mb-1">
+                    {item.descricao}
+                  </h3>
+                  <div className="text-[11px] text-slate-500 mb-3">
+                    {item.categoria || "Geral"}
+                  </div>
 
                   {/* Informações chaves */}
                   <div className="grid grid-cols-2 gap-2 text-xs bg-slate-50 p-2.5 rounded-lg border border-slate-100 mb-3 font-mono">
                     <div>
-                      <span className="text-[10px] text-slate-400 block font-sans">Validade</span>
-                      <strong className="text-slate-900">{formatarDataBR(item.validade)}</strong>
+                      <span className="text-[10px] text-slate-400 block font-sans">
+                        Validade
+                      </span>
+                      <strong className="text-slate-900">
+                        {formatarDataBR(item.validade)}
+                      </strong>
                     </div>
                     <div>
-                      <span className="text-[10px] text-slate-400 block font-sans">Lote</span>
-                      <strong className="text-slate-900">{item.lote || 'N/A'}</strong>
+                      <span className="text-[10px] text-slate-400 block font-sans">
+                        Lote
+                      </span>
+                      <strong className="text-slate-900">
+                        {item.lote || "N/A"}
+                      </strong>
                     </div>
                     <div>
-                      <span className="text-[10px] text-slate-400 block font-sans">Quantidade</span>
-                      <strong className="text-slate-900">{item.quantidade} un</strong>
+                      <span className="text-[10px] text-slate-400 block font-sans">
+                        Quantidade
+                      </span>
+                      <strong className="text-slate-900">
+                        {item.quantidade} un
+                      </strong>
                     </div>
                     <div>
-                      <span className="text-[10px] text-slate-400 block font-sans">Código</span>
-                      <strong className="text-slate-700 truncate block">{item.codigoBarras || '-'}</strong>
+                      <span className="text-[10px] text-slate-400 block font-sans">
+                        Código
+                      </span>
+                      <strong className="text-slate-700 truncate block">
+                        {item.codigoBarras || "-"}
+                      </strong>
                     </div>
                   </div>
                 </div>
@@ -437,7 +506,9 @@ export const SpreadsheetTable: React.FC<SpreadsheetTableProps> = ({
                     >
                       <Eye className="w-3.5 h-3.5" /> Ver Foto
                     </button>
-                  ) : <span />}
+                  ) : (
+                    <span />
+                  )}
 
                   <div className="flex items-center gap-1">
                     <button

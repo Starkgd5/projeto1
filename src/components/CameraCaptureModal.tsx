@@ -1,7 +1,17 @@
-import React, { useState, useRef, useEffect } from 'react';
-import { Camera, X, RefreshCw, Upload, Sparkles, Check, AlertCircle, Scan, Image as ImageIcon } from 'lucide-react';
-import { extractTextFromImage } from '../services/ocrService';
-import { OCRResult } from '../types';
+import React, { useState, useRef, useEffect } from "react";
+import {
+  Camera,
+  X,
+  RefreshCw,
+  Upload,
+  Sparkles,
+  Check,
+  AlertCircle,
+  Scan,
+  Image as ImageIcon,
+} from "lucide-react";
+import { extractTextFromImage } from "../services/ocrService";
+import { OCRResult } from "../types";
 
 interface CameraCaptureModalProps {
   isOpen: boolean;
@@ -12,16 +22,18 @@ interface CameraCaptureModalProps {
 export const CameraCaptureModal: React.FC<CameraCaptureModalProps> = ({
   isOpen,
   onClose,
-  onSuccess
+  onSuccess,
 }) => {
   const [cameraError, setCameraError] = useState<string | null>(null);
-  const [facingMode, setFacingMode] = useState<'environment' | 'user'>('environment');
+  const [facingMode, setFacingMode] = useState<"environment" | "user">(
+    "environment",
+  );
   const [capturedPhoto, setCapturedPhoto] = useState<string | null>(null);
-  
+
   // Estados do OCR
   const [isProcessing, setIsProcessing] = useState(false);
   const [progressPercent, setProgressPercent] = useState(0);
-  const [statusMessage, setStatusMessage] = useState('');
+  const [statusMessage, setStatusMessage] = useState("");
   const [ocrResult, setOcrResult] = useState<OCRResult | null>(null);
 
   const videoRef = useRef<HTMLVideoElement | null>(null);
@@ -47,20 +59,20 @@ export const CameraCaptureModal: React.FC<CameraCaptureModalProps> = ({
     setCameraError(null);
     try {
       if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
-        throw new Error('Câmera não suportada neste navegador ou ambiente.');
+        throw new Error("Câmera não suportada neste navegador ou ambiente.");
       }
 
       const mediaStream = await navigator.mediaDevices.getUserMedia({
         video: {
           facingMode: { ideal: facingMode },
           width: { ideal: 1920 },
-          height: { ideal: 1080 }
+          height: { ideal: 1080 },
         },
-        audio: false
+        audio: false,
       });
 
       if (requestId !== cameraRequestIdRef.current) {
-        mediaStream.getTracks().forEach(track => track.stop());
+        mediaStream.getTracks().forEach((track) => track.stop());
         return;
       }
 
@@ -70,36 +82,36 @@ export const CameraCaptureModal: React.FC<CameraCaptureModalProps> = ({
       }
     } catch (err: any) {
       if (requestId !== cameraRequestIdRef.current) return;
-      console.warn('Erro ao acessar a câmera:', err);
+      console.warn("Erro ao acessar a câmera:", err);
       setCameraError(
-        'Não foi possível acessar a câmera do dispositivo. Verifique as permissões ou envie uma foto do arquivo/galeria.'
+        "Não foi possível acessar a câmera do dispositivo. Verifique as permissões ou envie uma foto do arquivo/galeria.",
       );
     }
   };
 
   const stopCamera = () => {
     cameraRequestIdRef.current += 1;
-    activeStreamRef.current?.getTracks().forEach(track => track.stop());
+    activeStreamRef.current?.getTracks().forEach((track) => track.stop());
     activeStreamRef.current = null;
     if (videoRef.current) videoRef.current.srcObject = null;
   };
 
   const toggleFacingMode = () => {
-    setFacingMode(prev => (prev === 'environment' ? 'user' : 'environment'));
+    setFacingMode((prev) => (prev === "environment" ? "user" : "environment"));
   };
 
   // Capturar foto do stream de vídeo
   const tirarFoto = () => {
     if (!videoRef.current) return;
     const video = videoRef.current;
-    const canvas = document.createElement('canvas');
+    const canvas = document.createElement("canvas");
     canvas.width = video.videoWidth || 1280;
     canvas.height = video.videoHeight || 720;
-    const ctx = canvas.getContext('2d');
+    const ctx = canvas.getContext("2d");
     if (!ctx) return;
 
     ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
-    const dataUrl = canvas.toDataURL('image/jpeg', 0.92);
+    const dataUrl = canvas.toDataURL("image/jpeg", 0.92);
     setCapturedPhoto(dataUrl);
     stopCamera();
     processarOCR(dataUrl);
@@ -126,7 +138,7 @@ export const CameraCaptureModal: React.FC<CameraCaptureModalProps> = ({
   const processarOCR = async (imageSrc: string) => {
     setIsProcessing(true);
     setProgressPercent(10);
-    setStatusMessage('Otimizando imagem para leitura...');
+    setStatusMessage("Otimizando imagem para leitura...");
     setOcrResult(null);
 
     try {
@@ -137,11 +149,13 @@ export const CameraCaptureModal: React.FC<CameraCaptureModalProps> = ({
       setOcrResult(result);
     } catch (err: any) {
       console.error(err);
-      setStatusMessage('Não foi possível ler automaticamente. Você poderá preencher manualmente.');
+      setStatusMessage(
+        "Não foi possível ler automaticamente. Você poderá preencher manualmente.",
+      );
       setOcrResult({
-        rawText: '',
+        rawText: "",
         validadeDetectada: undefined,
-        loteDetectado: undefined
+        loteDetectado: undefined,
       });
     } finally {
       setIsProcessing(false);
@@ -149,68 +163,68 @@ export const CameraCaptureModal: React.FC<CameraCaptureModalProps> = ({
   };
 
   // Criador de imagens sintéticas de teste para testes rápidos sem câmera
-  const carregarExemploTeste = (exemploTipo: 'leite' | 'cafe' | 'remedio') => {
-    const canvas = document.createElement('canvas');
+  const carregarExemploTeste = (exemploTipo: "leite" | "cafe" | "remedio") => {
+    const canvas = document.createElement("canvas");
     canvas.width = 800;
     canvas.height = 450;
-    const ctx = canvas.getContext('2d');
+    const ctx = canvas.getContext("2d");
     if (!ctx) return;
 
     // Fundo simulando embalagem
-    if (exemploTipo === 'leite') {
-      ctx.fillStyle = '#f8fafc';
+    if (exemploTipo === "leite") {
+      ctx.fillStyle = "#f8fafc";
       ctx.fillRect(0, 0, canvas.width, canvas.height);
-      ctx.fillStyle = '#0284c7';
+      ctx.fillStyle = "#0284c7";
       ctx.fillRect(0, 0, canvas.width, 100);
-      ctx.fillStyle = '#ffffff';
-      ctx.font = 'bold 36px Arial';
-      ctx.fillText('LEITE INTEGRAL UHT 1L', 40, 65);
+      ctx.fillStyle = "#ffffff";
+      ctx.font = "bold 36px Arial";
+      ctx.fillText("LEITE INTEGRAL UHT 1L", 40, 65);
 
       // Caixa de carimbo da validade e lote
-      ctx.fillStyle = '#e2e8f0';
+      ctx.fillStyle = "#e2e8f0";
       ctx.fillRect(100, 160, 600, 200);
-      ctx.strokeStyle = '#94a3b8';
+      ctx.strokeStyle = "#94a3b8";
       ctx.lineWidth = 3;
       ctx.strokeRect(100, 160, 600, 200);
 
       // Carimbo dot-matrix preto
-      ctx.fillStyle = '#0f172a';
-      ctx.font = 'bold 38px monospace';
-      ctx.fillText('FAB: 12/03/2026', 150, 230);
-      ctx.fillText('VAL: 12/09/2026', 150, 290);
-      ctx.fillText('LOTE: LT24980', 150, 340);
-    } else if (exemploTipo === 'cafe') {
-      ctx.fillStyle = '#78350f';
+      ctx.fillStyle = "#0f172a";
+      ctx.font = "bold 38px monospace";
+      ctx.fillText("FAB: 12/03/2026", 150, 230);
+      ctx.fillText("VAL: 12/09/2026", 150, 290);
+      ctx.fillText("LOTE: LT24980", 150, 340);
+    } else if (exemploTipo === "cafe") {
+      ctx.fillStyle = "#78350f";
       ctx.fillRect(0, 0, canvas.width, canvas.height);
-      ctx.fillStyle = '#fbbf24';
-      ctx.font = 'bold 36px Arial';
-      ctx.fillText('CAFE PREMIUM 500G', 40, 65);
+      ctx.fillStyle = "#fbbf24";
+      ctx.font = "bold 36px Arial";
+      ctx.fillText("CAFE PREMIUM 500G", 40, 65);
 
-      ctx.fillStyle = '#fef3c7';
+      ctx.fillStyle = "#fef3c7";
       ctx.fillRect(100, 160, 600, 200);
-      ctx.fillStyle = '#1c1917';
-      ctx.font = 'bold 40px monospace';
-      ctx.fillText('LOTE: CP8841-A', 150, 240);
-      ctx.fillText('VENC: 30/11/2026', 150, 310);
+      ctx.fillStyle = "#1c1917";
+      ctx.font = "bold 40px monospace";
+      ctx.fillText("LOTE: CP8841-A", 150, 240);
+      ctx.fillText("VENC: 30/11/2026", 150, 310);
     } else {
-      ctx.fillStyle = '#ffffff';
+      ctx.fillStyle = "#ffffff";
       ctx.fillRect(0, 0, canvas.width, canvas.height);
-      ctx.fillStyle = '#10b981';
+      ctx.fillStyle = "#10b981";
       ctx.fillRect(0, 0, canvas.width, 90);
-      ctx.fillStyle = '#ffffff';
-      ctx.font = 'bold 32px Arial';
-      ctx.fillText('LABORATORIO - USO ORAL', 40, 60);
+      ctx.fillStyle = "#ffffff";
+      ctx.font = "bold 32px Arial";
+      ctx.fillText("LABORATORIO - USO ORAL", 40, 60);
 
-      ctx.fillStyle = '#f1f5f9';
+      ctx.fillStyle = "#f1f5f9";
       ctx.fillRect(80, 140, 640, 220);
-      ctx.fillStyle = '#1e293b';
-      ctx.font = 'bold 36px monospace';
-      ctx.fillText('PARTIDA / LOTE: MED-904', 120, 210);
-      ctx.fillText('VALIDADE: 28/02/2027', 120, 280);
-      ctx.fillText('7891000100103', 120, 340);
+      ctx.fillStyle = "#1e293b";
+      ctx.font = "bold 36px monospace";
+      ctx.fillText("PARTIDA / LOTE: MED-904", 120, 210);
+      ctx.fillText("VALIDADE: 28/02/2027", 120, 280);
+      ctx.fillText("7891000100103", 120, 340);
     }
 
-    const dataUrl = canvas.toDataURL('image/jpeg', 0.95);
+    const dataUrl = canvas.toDataURL("image/jpeg", 0.95);
     setCapturedPhoto(dataUrl);
     stopCamera();
     processarOCR(dataUrl);
@@ -220,11 +234,11 @@ export const CameraCaptureModal: React.FC<CameraCaptureModalProps> = ({
     if (capturedPhoto) {
       onSuccess(
         ocrResult || {
-          rawText: '',
+          rawText: "",
           validadeDetectada: undefined,
-          loteDetectado: undefined
+          loteDetectado: undefined,
         },
-        capturedPhoto
+        capturedPhoto,
       );
       handleFechar();
     }
@@ -254,8 +268,12 @@ export const CameraCaptureModal: React.FC<CameraCaptureModalProps> = ({
               <Camera className="w-5 h-5" />
             </div>
             <div>
-              <h2 className="text-base font-bold text-white">Leitor de Validade e Lote por Foto</h2>
-              <p className="text-xs text-slate-400">Aponte a câmera para os dados impressos na embalagem</p>
+              <h2 className="text-base font-bold text-white">
+                Leitor de Validade e Lote por Foto
+              </h2>
+              <p className="text-xs text-slate-400">
+                Aponte a câmera para os dados impressos na embalagem
+              </p>
             </div>
           </div>
           <button
@@ -302,7 +320,9 @@ export const CameraCaptureModal: React.FC<CameraCaptureModalProps> = ({
               {cameraError && (
                 <div className="absolute inset-0 bg-slate-900/90 flex flex-col items-center justify-center p-6 text-center">
                   <AlertCircle className="w-12 h-12 text-amber-400 mb-3" />
-                  <p className="text-sm font-semibold text-slate-200 max-w-md mb-4">{cameraError}</p>
+                  <p className="text-sm font-semibold text-slate-200 max-w-md mb-4">
+                    {cameraError}
+                  </p>
                   <button
                     onClick={() => fileInputRef.current?.click()}
                     className="flex items-center gap-2 px-4 py-2 bg-emerald-600 hover:bg-emerald-500 text-white rounded-xl text-sm font-semibold shadow-lg"
@@ -325,7 +345,9 @@ export const CameraCaptureModal: React.FC<CameraCaptureModalProps> = ({
               {isProcessing && (
                 <div className="absolute inset-0 bg-slate-950/85 backdrop-blur-sm flex flex-col items-center justify-center p-6 text-center">
                   <div className="w-14 h-14 rounded-full border-4 border-emerald-500/20 border-t-emerald-400 animate-spin mb-4" />
-                  <p className="text-base font-bold text-white mb-1">Processando OCR Inteligente</p>
+                  <p className="text-base font-bold text-white mb-1">
+                    Processando OCR Inteligente
+                  </p>
                   <p className="text-xs text-slate-300 mb-3">{statusMessage}</p>
                   <div className="w-64 bg-slate-800 rounded-full h-2 overflow-hidden border border-slate-700">
                     <div
@@ -333,7 +355,9 @@ export const CameraCaptureModal: React.FC<CameraCaptureModalProps> = ({
                       style={{ width: `${progressPercent}%` }}
                     />
                   </div>
-                  <span className="text-[11px] text-emerald-400 font-mono mt-2">{progressPercent}%</span>
+                  <span className="text-[11px] text-emerald-400 font-mono mt-2">
+                    {progressPercent}%
+                  </span>
                 </div>
               )}
             </div>
@@ -350,31 +374,42 @@ export const CameraCaptureModal: React.FC<CameraCaptureModalProps> = ({
               </span>
               {ocrResult.confianca && (
                 <span className="text-[11px] text-slate-400">
-                  Precisão: <strong className="text-slate-200">{Math.round(ocrResult.confianca)}%</strong>
+                  Precisão:{" "}
+                  <strong className="text-slate-200">
+                    {Math.round(ocrResult.confianca)}%
+                  </strong>
                 </span>
               )}
             </div>
 
             <div className="grid grid-cols-2 gap-3 mb-2">
               <div className="bg-slate-900/90 border border-slate-700 rounded-xl p-2.5">
-                <span className="text-[11px] text-slate-400 block mb-0.5">Validade Encontrada</span>
+                <span className="text-[11px] text-slate-400 block mb-0.5">
+                  Validade Encontrada
+                </span>
                 {ocrResult.validadeDetectada ? (
                   <span className="text-base font-black text-emerald-400 font-mono">
-                    {ocrResult.validadeDetectada.split('-').reverse().join('/')}
+                    {ocrResult.validadeDetectada.split("-").reverse().join("/")}
                   </span>
                 ) : (
-                  <span className="text-xs text-amber-400 italic">Não detectada automaticamente</span>
+                  <span className="text-xs text-amber-400 italic">
+                    Não detectada automaticamente
+                  </span>
                 )}
               </div>
 
               <div className="bg-slate-900/90 border border-slate-700 rounded-xl p-2.5">
-                <span className="text-[11px] text-slate-400 block mb-0.5">Lote Encontrado</span>
+                <span className="text-[11px] text-slate-400 block mb-0.5">
+                  Lote Encontrado
+                </span>
                 {ocrResult.loteDetectado ? (
                   <span className="text-base font-black text-teal-400 font-mono">
                     {ocrResult.loteDetectado}
                   </span>
                 ) : (
-                  <span className="text-xs text-amber-400 italic">Não detectado automaticamente</span>
+                  <span className="text-xs text-amber-400 italic">
+                    Não detectado automaticamente
+                  </span>
                 )}
               </div>
             </div>
@@ -382,7 +417,9 @@ export const CameraCaptureModal: React.FC<CameraCaptureModalProps> = ({
             {/* Texto bruto lido (para conferência rápida) */}
             {ocrResult.rawText && (
               <details className="text-[11px] text-slate-400 cursor-pointer">
-                <summary className="hover:text-slate-200">Ver texto lido na íntegra</summary>
+                <summary className="hover:text-slate-200">
+                  Ver texto lido na íntegra
+                </summary>
                 <div className="p-2 bg-slate-950 rounded-lg font-mono text-[10px] text-slate-300 mt-1 whitespace-pre-wrap max-h-24 overflow-y-auto">
                   {ocrResult.rawText}
                 </div>
@@ -427,16 +464,18 @@ export const CameraCaptureModal: React.FC<CameraCaptureModalProps> = ({
 
                 {/* Dropdown / Botões de Teste Simulado */}
                 <div className="flex items-center gap-1">
-                  <span className="text-[11px] text-slate-400 hidden xs:inline">Testar com:</span>
+                  <span className="text-[11px] text-slate-400 hidden xs:inline">
+                    Testar com:
+                  </span>
                   <button
-                    onClick={() => carregarExemploTeste('leite')}
+                    onClick={() => carregarExemploTeste("leite")}
                     className="px-2 py-1 bg-slate-800 hover:bg-slate-700 text-[11px] text-slate-300 rounded border border-slate-700"
                     title="Simular foto de caixa de leite"
                   >
                     Ex. Leite
                   </button>
                   <button
-                    onClick={() => carregarExemploTeste('cafe')}
+                    onClick={() => carregarExemploTeste("cafe")}
                     className="px-2 py-1 bg-slate-800 hover:bg-slate-700 text-[11px] text-slate-300 rounded border border-slate-700"
                     title="Simular foto de pacote de café"
                   >

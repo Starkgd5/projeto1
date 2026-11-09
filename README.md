@@ -10,7 +10,7 @@ Aplicativo completo em **React 19**, **TypeScript** e **Tailwind CSS** para capt
    - Câmera em tempo real com visor direcionador (`viewfinder`) para enquadrar a data de validade e lote.
    - Alternância entre câmera traseira (`environment`) e frontal (`user`).
    - Suporte a upload de fotos da galeria ou arquivos (`input file`).
-   - Pré-processamento no Canvas (escala de cinza e realce de contraste) para ajudar na leitura de caracteres impressos por jato de tinta (*inkjet dot-matrix*).
+   - Pré-processamento no Canvas (escala de cinza e realce de contraste) para ajudar na leitura de caracteres impressos por jato de tinta (_inkjet dot-matrix_).
    - Motor OCR com **Tesseract.js** em Português e Inglês com barra de progresso em tempo real.
    - Analisador Regex em Português para datas (`VAL: 15/08/2026`, `VENC: 10/26`, `VAL 28/02/2027`, `15 AGO 2026`, etc.) e lotes (`LOTE: AB1234`, `LT: 89341`, `L: 20240901`, etc.).
    - Modo de testes com fotos simuladas de embalagens (leite, café, remédio) para experimentação instantânea mesmo sem câmera física.
@@ -77,17 +77,21 @@ O endpoint `PUT /api/products` substitui a lista inteira, conforme o contrato us
 Para desenvolvimento sem Docker, a API fica em `server/`: `cd server && npm install && npm start`. Configure `DB_HOST`, `DB_PORT`, `DB_NAME`, `DB_USER`, `DB_PASSWORD` e `REDIS_URL` para serviços MariaDB e Redis acessíveis. O cache Redis é invalidado a cada gravação e os dados permanecem no volume `mariadb_data`.
 
 ### 1. Iniciar o servidor de desenvolvimento:
+
 ```bash
 npm run dev
 ```
+
 O servidor iniciará em `http://localhost:5173`.
 
 ### 2. Gerar build de produção:
+
 ```bash
 npm run build
 ```
 
 ### 3. Executar os testes automatizados:
+
 ```bash
 npm test
 ```

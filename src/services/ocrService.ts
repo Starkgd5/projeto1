@@ -1,6 +1,6 @@
-import { createWorker } from 'tesseract.js';
-import { OCRResult } from '../types';
-import { MESES_PT, getUltimoDiaDoMes, normalizarAno } from '../utils/dateUtils';
+import { createWorker } from "tesseract.js";
+import { OCRResult } from "../types";
+import { MESES_PT, getUltimoDiaDoMes, normalizarAno } from "../utils/dateUtils";
 
 /**
  * Pré-processa uma imagem no canvas (escala de cinza, aumento de contraste e binarização)
@@ -9,10 +9,10 @@ import { MESES_PT, getUltimoDiaDoMes, normalizarAno } from '../utils/dateUtils';
 export async function preprocessImage(imageSrc: string): Promise<string> {
   return new Promise((resolve) => {
     const img = new Image();
-    img.crossOrigin = 'anonymous';
+    img.crossOrigin = "anonymous";
     img.onload = () => {
-      const canvas = document.createElement('canvas');
-      const ctx = canvas.getContext('2d');
+      const canvas = document.createElement("canvas");
+      const ctx = canvas.getContext("2d");
       if (!ctx) {
         resolve(imageSrc);
         return;
@@ -49,22 +49,23 @@ export async function preprocessImage(imageSrc: string): Promise<string> {
 
         for (let i = 0; i < data.length; i += 4) {
           // Luminância padrão ITU-R BT.601
-          const gray = 0.299 * data[i] + 0.587 * data[i + 1] + 0.114 * data[i + 2];
-          
+          const gray =
+            0.299 * data[i] + 0.587 * data[i + 1] + 0.114 * data[i + 2];
+
           // Ajuste de contraste
           let adjusted = factor * (gray - 128) + 128;
           if (adjusted < 0) adjusted = 0;
           if (adjusted > 255) adjusted = 255;
 
-          data[i] = adjusted;     // R
+          data[i] = adjusted; // R
           data[i + 1] = adjusted; // G
           data[i + 2] = adjusted; // B
         }
 
         ctx.putImageData(imageData, 0, 0);
-        resolve(canvas.toDataURL('image/jpeg', 0.9));
+        resolve(canvas.toDataURL("image/jpeg", 0.9));
       } catch (e) {
-        console.warn('Erro ao processar imagem no canvas:', e);
+        console.warn("Erro ao processar imagem no canvas:", e);
         resolve(imageSrc);
       }
     };
@@ -78,43 +79,47 @@ export async function preprocessImage(imageSrc: string): Promise<string> {
  */
 export async function extractTextFromImage(
   imageSrc: string,
-  onProgress?: (progress: number, status: string) => void
+  onProgress?: (progress: number, status: string) => void,
 ): Promise<OCRResult> {
   let processedSrc = imageSrc;
   try {
-    if (onProgress) onProgress(10, 'Otimizando nitidez da foto...');
+    if (onProgress) onProgress(10, "Otimizando nitidez da foto...");
     processedSrc = await preprocessImage(imageSrc);
   } catch (err) {
-    console.warn('Aviso no pré-processamento:', err);
+    console.warn("Aviso no pré-processamento:", err);
   }
 
-  if (onProgress) onProgress(25, 'Iniciando inteligência de reconhecimento...');
+  if (onProgress) onProgress(25, "Iniciando inteligência de reconhecimento...");
 
   let worker;
   try {
-    worker = await createWorker('por+eng', 1, {
+    worker = await createWorker("por+eng", 1, {
       logger: (m) => {
-        if (m.status === 'recognizing text' && onProgress) {
+        if (m.status === "recognizing text" && onProgress) {
           const p = Math.round(30 + (m.progress || 0) * 65);
-          onProgress(p, `Decodificando texto: ${Math.round((m.progress || 0) * 100)}%`);
+          onProgress(
+            p,
+            `Decodificando texto: ${Math.round((m.progress || 0) * 100)}%`,
+          );
         } else if (onProgress && m.status) {
           onProgress(30, `Preparando OCR (${m.status})...`);
         }
-      }
+      },
     });
 
     // Configura parâmetros para focar em números, letras maiúsculas e pontuação comum em datas/lotes
     await worker.setParameters({
-      tessedit_char_whitelist: '0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz/.:- '
+      tessedit_char_whitelist:
+        "0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz/.:- ",
     });
 
     const ret = await worker.recognize(processedSrc);
     await worker.terminate();
 
-    const rawText = ret.data.text || '';
+    const rawText = ret.data.text || "";
     const parsed = parseOcrText(rawText);
 
-    if (onProgress) onProgress(100, 'Texto processado com sucesso!');
+    if (onProgress) onProgress(100, "Texto processado com sucesso!");
 
     return {
       rawText,
@@ -122,17 +127,19 @@ export async function extractTextFromImage(
       validadeOriginalTexto: parsed.validadeOriginalTexto,
       loteDetectado: parsed.loteDetectado,
       codigoBarrasDetectado: parsed.codigoBarrasDetectado,
-      confianca: ret.data.confidence
+      confianca: ret.data.confidence,
     };
   } catch (error) {
-    console.error('Falha no Tesseract.js:', error);
+    console.error("Falha no Tesseract.js:", error);
     if (worker) {
-      try { await worker.terminate(); } catch (_) {}
+      try {
+        await worker.terminate();
+      } catch (_) {}
     }
     // Fallback: se falhar o worker (ex: sem conexão inicial para download de idioma),
     // tenta parser genérico ou lança erro explicativo
     throw new Error(
-      'Não foi possível concluir o OCR automático. Você pode digitar os dados manualmente ou tentar outra foto mais nítida.'
+      "Não foi possível concluir o OCR automático. Você pode digitar os dados manualmente ou tentar outra foto mais nítida.",
     );
   }
 }
@@ -149,8 +156,11 @@ export function parseOcrText(text: string): {
 } {
   if (!text) return {};
 
-  const cleanText = text.replace(/\r\n/g, '\n').toUpperCase();
-  const lines = cleanText.split('\n').map((l) => l.trim()).filter(Boolean);
+  const cleanText = text.replace(/\r\n/g, "\n").toUpperCase();
+  const lines = cleanText
+    .split("\n")
+    .map((l) => l.trim())
+    .filter(Boolean);
 
   let validadeDetectada: string | undefined;
   let validadeOriginalTexto: string | undefined;
@@ -169,7 +179,7 @@ export function parseOcrText(text: string): {
   const lotePatterns = [
     /(?:LOTE|LOT|LT|L|BATCH|PARTIDA)\s*[:.\-]?\s*([A-Z0-9\-_]{3,15})/i,
     /\bL\s*[:.\-]?\s*([A-Z0-9]{4,12})\b/i,
-    /\b([A-Z]{1,3}\d{3,8}[A-Z]?)\b/ // Código alfanumérico isolado com formato típico de lote
+    /\b([A-Z]{1,3}\d{3,8}[A-Z]?)\b/, // Código alfanumérico isolado com formato típico de lote
   ];
 
   for (const pattern of lotePatterns) {
@@ -177,7 +187,11 @@ export function parseOcrText(text: string): {
     if (match && match[1]) {
       const candidate = match[1].trim();
       // Não confunda com a palavra VAL ou FAB
-      if (!candidate.startsWith('VAL') && !candidate.startsWith('FAB') && candidate.length >= 3) {
+      if (
+        !candidate.startsWith("VAL") &&
+        !candidate.startsWith("FAB") &&
+        candidate.length >= 3
+      ) {
         loteDetectado = candidate;
         break;
       }
@@ -187,11 +201,13 @@ export function parseOcrText(text: string): {
   // Se não achou com prefixo explícito, procura por linha contendo L ou LOTE
   if (!loteDetectado) {
     for (const line of lines) {
-      if (line.includes('LOT') || line.includes('LT')) {
+      if (line.includes("LOT") || line.includes("LT")) {
         const parts = line.split(/[:\s]+/);
-        const idx = parts.findIndex((p) => p.includes('LOT') || p.includes('LT'));
+        const idx = parts.findIndex(
+          (p) => p.includes("LOT") || p.includes("LT"),
+        );
         if (idx >= 0 && parts[idx + 1]) {
-          loteDetectado = parts[idx + 1].replace(/[^A-Z0-9\-_]/g, '');
+          loteDetectado = parts[idx + 1].replace(/[^A-Z0-9\-_]/g, "");
           break;
         }
       }
@@ -204,7 +220,7 @@ export function parseOcrText(text: string): {
     /(?:VAL|VENC|VALIDADE|VENCIMENTO|V|EXP)\s*[:.\-]?\s*(\d{1,2}[\/\.\-]\d{1,2}[\/\.\-]\d{2,4})/i,
     /(?:VAL|VENC|VALIDADE|VENCIMENTO|V|EXP)\s*[:.\-]?\s*(\d{1,2}[\/\.\-]\d{2,4})/i,
     /(?:VAL|VENC)\s*[:.\-]?\s*([A-Z]{3}[\/\.\- ]\d{2,4})/i,
-    /(?:VAL|VENC)\s*[:.\-]?\s*(\d{1,2}\s+[A-Z]{3}\s+\d{2,4})/i
+    /(?:VAL|VENC)\s*[:.\-]?\s*(\d{1,2}\s+[A-Z]{3}\s+\d{2,4})/i,
   ];
 
   for (const pattern of valKeywordPatterns) {
@@ -245,7 +261,8 @@ export function parseOcrText(text: string): {
 
   // Prioridade C: Formato MM/YYYY ou MM/YY isolado (ex: 12/26, 08/2027)
   if (!validadeDetectada) {
-    const monthYearRegex = /(?<![\d/.-])(0[1-9]|1[0-2])[\/\.\-](20\d{2}|\d{2})\b/;
+    const monthYearRegex =
+      /(?<![\d/.-])(0[1-9]|1[0-2])[\/\.\-](20\d{2}|\d{2})\b/;
     const myMatch = cleanText.match(monthYearRegex);
     if (myMatch) {
       const parsed = parseDateString(myMatch[0]);
@@ -260,7 +277,7 @@ export function parseOcrText(text: string): {
     validadeDetectada,
     validadeOriginalTexto,
     loteDetectado,
-    codigoBarrasDetectado
+    codigoBarrasDetectado,
   };
 }
 
@@ -274,8 +291,8 @@ export function parseDateString(str: string): string | null {
   // Caso: DD/MM/YYYY ou DD.MM.YYYY ou DD-MM-YYYY ou com 2 dígitos de ano
   const dmyMatch = s.match(/^(\d{1,2})[\/\.\-](\d{1,2})[\/\.\-](\d{2,4})$/);
   if (dmyMatch) {
-    const dia = dmyMatch[1].padStart(2, '0');
-    const mes = dmyMatch[2].padStart(2, '0');
+    const dia = dmyMatch[1].padStart(2, "0");
+    const mes = dmyMatch[2].padStart(2, "0");
     const ano = normalizarAno(dmyMatch[3]);
     const numDia = parseInt(dia, 10);
     const numMes = parseInt(mes, 10);
@@ -287,13 +304,13 @@ export function parseDateString(str: string): string | null {
   // Caso: MM/YYYY ou MM/YY (ex: 08/26 ou 11/2027) -> atribui último dia do mês
   const myMatch = s.match(/^(\d{1,2})[\/\.\-](\d{2,4})$/);
   if (myMatch) {
-    const mes = myMatch[1].padStart(2, '0');
+    const mes = myMatch[1].padStart(2, "0");
     const ano = normalizarAno(myMatch[2]);
     const numMes = parseInt(mes, 10);
     const numAno = parseInt(ano, 10);
     if (numMes >= 1 && numMes <= 12) {
       const ultimoDia = getUltimoDiaDoMes(numMes, numAno);
-      const diaStr = String(ultimoDia).padStart(2, '0');
+      const diaStr = String(ultimoDia).padStart(2, "0");
       return `${ano}-${mes}-${diaStr}`;
     }
   }
@@ -305,7 +322,7 @@ export function parseDateString(str: string): string | null {
       const digits = s.match(/\d+/g);
       if (digits) {
         if (digits.length >= 2) {
-          const dia = digits[0].padStart(2, '0');
+          const dia = digits[0].padStart(2, "0");
           const ano = normalizarAno(digits[1]);
           if (isValidDate(Number(ano), Number(mesNum), Number(dia))) {
             return `${ano}-${mesNum}-${dia}`;
@@ -315,7 +332,7 @@ export function parseDateString(str: string): string | null {
           const ano = normalizarAno(digits[0]);
           const numAno = parseInt(ano, 10);
           const ultimoDia = getUltimoDiaDoMes(parseInt(mesNum, 10), numAno);
-          return `${ano}-${mesNum}-${String(ultimoDia).padStart(2, '0')}`;
+          return `${ano}-${mesNum}-${String(ultimoDia).padStart(2, "0")}`;
         }
       }
     }
@@ -325,8 +342,8 @@ export function parseDateString(str: string): string | null {
   const isoMatch = s.match(/^(\d{4})[\/\.\-](\d{1,2})[\/\.\-](\d{1,2})$/);
   if (isoMatch) {
     const ano = isoMatch[1];
-    const mes = isoMatch[2].padStart(2, '0');
-    const dia = isoMatch[3].padStart(2, '0');
+    const mes = isoMatch[2].padStart(2, "0");
+    const dia = isoMatch[3].padStart(2, "0");
     if (isValidDate(Number(ano), Number(mes), Number(dia))) {
       return `${ano}-${mes}-${dia}`;
     }
@@ -338,6 +355,19 @@ export function parseDateString(str: string): string | null {
 function isValidDate(year: number, month: number, day: number): boolean {
   if (month < 1 || month > 12 || day < 1) return false;
   const leapYear = year % 4 === 0 && (year % 100 !== 0 || year % 400 === 0);
-  const daysInMonth = [31, leapYear ? 29 : 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31];
+  const daysInMonth = [
+    31,
+    leapYear ? 29 : 28,
+    31,
+    30,
+    31,
+    30,
+    31,
+    31,
+    30,
+    31,
+    30,
+    31,
+  ];
   return day <= daysInMonth[month - 1];
 }

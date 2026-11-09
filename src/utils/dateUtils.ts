@@ -1,24 +1,57 @@
-import { ExpirationInfo, ExpirationStatus } from '../types';
+import { ExpirationInfo, ExpirationStatus } from "../types";
 
 export const MESES_PT: Record<string, string> = {
-  jan: '01', janeiro: '01',
-  fev: '02', fevereiro: '02', feb: '02',
-  mar: '03', marco: '03', março: '03',
-  abr: '04', abril: '04', apr: '04',
-  mai: '05', maio: '05', may: '05',
-  jun: '06', junho: '06',
-  jul: '07', julho: '07',
-  ago: '08', agosto: '08', aug: '08',
-  set: '09', setembro: '09', sep: '09',
-  out: '10', outubro: '10', oct: '10',
-  nov: '11', novembro: '11',
-  dez: '12', dezembro: '12', dec: '12',
+  jan: "01",
+  janeiro: "01",
+  fev: "02",
+  fevereiro: "02",
+  feb: "02",
+  mar: "03",
+  marco: "03",
+  março: "03",
+  abr: "04",
+  abril: "04",
+  apr: "04",
+  mai: "05",
+  maio: "05",
+  may: "05",
+  jun: "06",
+  junho: "06",
+  jul: "07",
+  julho: "07",
+  ago: "08",
+  agosto: "08",
+  aug: "08",
+  set: "09",
+  setembro: "09",
+  sep: "09",
+  out: "10",
+  outubro: "10",
+  oct: "10",
+  nov: "11",
+  novembro: "11",
+  dez: "12",
+  dezembro: "12",
+  dec: "12",
 };
 
 function isValidDate(year: number, month: number, day: number): boolean {
   if (month < 1 || month > 12 || day < 1) return false;
   const leapYear = year % 4 === 0 && (year % 100 !== 0 || year % 400 === 0);
-  const daysInMonth = [31, leapYear ? 29 : 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31];
+  const daysInMonth = [
+    31,
+    leapYear ? 29 : 28,
+    31,
+    30,
+    31,
+    30,
+    31,
+    31,
+    30,
+    31,
+    30,
+    31,
+  ];
   return day <= daysInMonth[month - 1];
 }
 
@@ -27,20 +60,23 @@ function isValidDate(year: number, month: number, day: number): boolean {
  */
 export function getExpirationInfo(validadeISO: string): ExpirationInfo {
   const isoMatch = validadeISO.match(/^(\d{4})-(\d{2})-(\d{2})$/);
-  if (!isoMatch || !isValidDate(Number(isoMatch[1]), Number(isoMatch[2]), Number(isoMatch[3]))) {
+  if (
+    !isoMatch ||
+    !isValidDate(Number(isoMatch[1]), Number(isoMatch[2]), Number(isoMatch[3]))
+  ) {
     return {
-      status: 'invalida',
+      status: "invalida",
       diasRestantes: Number.NaN,
       mesesRestantes: Number.NaN,
-      label: validadeISO ? 'Data inválida' : 'Sem data',
+      label: validadeISO ? "Data inválida" : "Sem data",
       colorClass: {
-        bg: 'bg-rose-50',
-        text: 'text-rose-700',
-        border: 'border-rose-200',
-        badge: 'bg-rose-100 text-rose-800 border-rose-300',
-        dot: 'bg-rose-500'
+        bg: "bg-rose-50",
+        text: "text-rose-700",
+        border: "border-rose-200",
+        badge: "bg-rose-100 text-rose-800 border-rose-300",
+        dot: "bg-rose-500",
       },
-      requerAtencao6Meses: false
+      requerAtencao6Meses: false,
     };
   }
 
@@ -48,7 +84,11 @@ export function getExpirationInfo(validadeISO: string): ExpirationInfo {
   today.setHours(0, 0, 0, 0);
 
   // Parse YYYY-MM-DD
-  const expDate = new Date(Number(isoMatch[1]), Number(isoMatch[2]) - 1, Number(isoMatch[3]));
+  const expDate = new Date(
+    Number(isoMatch[1]),
+    Number(isoMatch[2]) - 1,
+    Number(isoMatch[3]),
+  );
   expDate.setHours(0, 0, 0, 0);
 
   const diffMs = expDate.getTime() - today.getTime();
@@ -56,75 +96,76 @@ export function getExpirationInfo(validadeISO: string): ExpirationInfo {
   const mesesRestantes = parseFloat((diasRestantes / 30.4375).toFixed(1));
 
   let status: ExpirationStatus;
-  let label = '';
+  let label = "";
   let colorClass = {
-    bg: 'bg-emerald-50',
-    text: 'text-emerald-700',
-    border: 'border-emerald-200',
-    badge: 'bg-emerald-100 text-emerald-800 border-emerald-300',
-    dot: 'bg-emerald-500'
+    bg: "bg-emerald-50",
+    text: "text-emerald-700",
+    border: "border-emerald-200",
+    badge: "bg-emerald-100 text-emerald-800 border-emerald-300",
+    dot: "bg-emerald-500",
   };
 
   if (diasRestantes < 0) {
-    status = 'vencido';
+    status = "vencido";
     const diasVencido = Math.abs(diasRestantes);
-    label = diasVencido === 1 ? 'Venceu ontem' : `Vencido há ${diasVencido} dias`;
+    label =
+      diasVencido === 1 ? "Venceu ontem" : `Vencido há ${diasVencido} dias`;
     colorClass = {
-      bg: 'bg-rose-50',
-      text: 'text-rose-700',
-      border: 'border-rose-200',
-      badge: 'bg-rose-100 text-rose-800 border-rose-300',
-      dot: 'bg-rose-600 animate-pulse'
+      bg: "bg-rose-50",
+      text: "text-rose-700",
+      border: "border-rose-200",
+      badge: "bg-rose-100 text-rose-800 border-rose-300",
+      dot: "bg-rose-600 animate-pulse",
     };
   } else if (diasRestantes === 0) {
-    status = 'critico_30';
-    label = 'Vence HOJE!';
+    status = "critico_30";
+    label = "Vence HOJE!";
     colorClass = {
-      bg: 'bg-rose-50',
-      text: 'text-rose-700',
-      border: 'border-rose-300',
-      badge: 'bg-rose-500 text-white border-rose-600',
-      dot: 'bg-rose-500 animate-ping'
+      bg: "bg-rose-50",
+      text: "text-rose-700",
+      border: "border-rose-300",
+      badge: "bg-rose-500 text-white border-rose-600",
+      dot: "bg-rose-500 animate-ping",
     };
   } else if (diasRestantes <= 30) {
-    status = 'critico_30';
-    label = `Crítico: Vence em ${diasRestantes} dia${diasRestantes > 1 ? 's' : ''}`;
+    status = "critico_30";
+    label = `Crítico: Vence em ${diasRestantes} dia${diasRestantes > 1 ? "s" : ""}`;
     colorClass = {
-      bg: 'bg-orange-50',
-      text: 'text-orange-700',
-      border: 'border-orange-200',
-      badge: 'bg-orange-100 text-orange-800 border-orange-300',
-      dot: 'bg-orange-500'
+      bg: "bg-orange-50",
+      text: "text-orange-700",
+      border: "border-orange-200",
+      badge: "bg-orange-100 text-orange-800 border-orange-300",
+      dot: "bg-orange-500",
     };
   } else if (diasRestantes <= 90) {
-    status = 'alerta_90';
+    status = "alerta_90";
     label = `Alerta: ${diasRestantes} dias (~${Math.round(mesesRestantes)} meses)`;
     colorClass = {
-      bg: 'bg-amber-50',
-      text: 'text-amber-700',
-      border: 'border-amber-200',
-      badge: 'bg-amber-100 text-amber-800 border-amber-300',
-      dot: 'bg-amber-500'
+      bg: "bg-amber-50",
+      text: "text-amber-700",
+      border: "border-amber-200",
+      badge: "bg-amber-100 text-amber-800 border-amber-300",
+      dot: "bg-amber-500",
     };
   } else if (diasRestantes <= 180) {
-    status = 'atencao_180';
+    status = "atencao_180";
     label = `Atenção: ${diasRestantes} dias (~${Math.round(mesesRestantes)} meses)`;
     colorClass = {
-      bg: 'bg-sky-50',
-      text: 'text-sky-700',
-      border: 'border-sky-200',
-      badge: 'bg-sky-100 text-sky-800 border-sky-300',
-      dot: 'bg-sky-500'
+      bg: "bg-sky-50",
+      text: "text-sky-700",
+      border: "border-sky-200",
+      badge: "bg-sky-100 text-sky-800 border-sky-300",
+      dot: "bg-sky-500",
     };
   } else {
-    status = 'seguro';
+    status = "seguro";
     label = `Seguro: ${diasRestantes} dias (${mesesRestantes} meses)`;
     colorClass = {
-      bg: 'bg-emerald-50',
-      text: 'text-emerald-700',
-      border: 'border-emerald-200',
-      badge: 'bg-emerald-100 text-emerald-800 border-emerald-300',
-      dot: 'bg-emerald-500'
+      bg: "bg-emerald-50",
+      text: "text-emerald-700",
+      border: "border-emerald-200",
+      badge: "bg-emerald-100 text-emerald-800 border-emerald-300",
+      dot: "bg-emerald-500",
     };
   }
 
@@ -138,7 +179,7 @@ export function getExpirationInfo(validadeISO: string): ExpirationInfo {
     mesesRestantes,
     label,
     colorClass,
-    requerAtencao6Meses
+    requerAtencao6Meses,
   };
 }
 
@@ -146,8 +187,8 @@ export function getExpirationInfo(validadeISO: string): ExpirationInfo {
  * Formata data ISO (YYYY-MM-DD) para padrão brasileiro DD/MM/YYYY
  */
 export function formatarDataBR(isoString: string): string {
-  if (!isoString) return '--/--/----';
-  const parts = isoString.split('-');
+  if (!isoString) return "--/--/----";
+  const parts = isoString.split("-");
   if (parts.length === 3) {
     return `${parts[2]}/${parts[1]}/${parts[0]}`;
   }
@@ -168,7 +209,7 @@ export function normalizarAno(anoStr: string): string {
   if (anoStr.length === 4) return anoStr;
   const num = parseInt(anoStr, 10);
   if (num >= 0 && num <= 70) {
-    return `20${anoStr.padStart(2, '0')}`;
+    return `20${anoStr.padStart(2, "0")}`;
   }
-  return `19${anoStr.padStart(2, '0')}`;
+  return `19${anoStr.padStart(2, "0")}`;
 }
