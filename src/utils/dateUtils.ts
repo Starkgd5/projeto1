@@ -15,22 +15,30 @@ export const MESES_PT: Record<string, string> = {
   dez: '12', dezembro: '12', dec: '12',
 };
 
+function isValidDate(year: number, month: number, day: number): boolean {
+  if (month < 1 || month > 12 || day < 1) return false;
+  const leapYear = year % 4 === 0 && (year % 100 !== 0 || year % 400 === 0);
+  const daysInMonth = [31, leapYear ? 29 : 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31];
+  return day <= daysInMonth[month - 1];
+}
+
 /**
  * Retorna os dias restantes e a categoria de alerta para a validade.
  */
 export function getExpirationInfo(validadeISO: string): ExpirationInfo {
-  if (!validadeISO) {
+  const isoMatch = validadeISO.match(/^(\d{4})-(\d{2})-(\d{2})$/);
+  if (!isoMatch || !isValidDate(Number(isoMatch[1]), Number(isoMatch[2]), Number(isoMatch[3]))) {
     return {
-      status: 'seguro',
-      diasRestantes: 9999,
-      mesesRestantes: 99,
-      label: 'Sem data',
+      status: 'invalida',
+      diasRestantes: Number.NaN,
+      mesesRestantes: Number.NaN,
+      label: validadeISO ? 'Data inválida' : 'Sem data',
       colorClass: {
-        bg: 'bg-slate-50',
-        text: 'text-slate-600',
-        border: 'border-slate-200',
-        badge: 'bg-slate-100 text-slate-700 border-slate-300',
-        dot: 'bg-slate-400'
+        bg: 'bg-rose-50',
+        text: 'text-rose-700',
+        border: 'border-rose-200',
+        badge: 'bg-rose-100 text-rose-800 border-rose-300',
+        dot: 'bg-rose-500'
       },
       requerAtencao6Meses: false
     };
@@ -40,8 +48,7 @@ export function getExpirationInfo(validadeISO: string): ExpirationInfo {
   today.setHours(0, 0, 0, 0);
 
   // Parse YYYY-MM-DD
-  const parts = validadeISO.split('-');
-  const expDate = new Date(parseInt(parts[0], 10), parseInt(parts[1], 10) - 1, parseInt(parts[2], 10));
+  const expDate = new Date(Number(isoMatch[1]), Number(isoMatch[2]) - 1, Number(isoMatch[3]));
   expDate.setHours(0, 0, 0, 0);
 
   const diffMs = expDate.getTime() - today.getTime();

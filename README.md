@@ -10,7 +10,7 @@ Aplicativo completo em **React 19**, **TypeScript** e **Tailwind CSS** para capt
    - Câmera em tempo real com visor direcionador (`viewfinder`) para enquadrar a data de validade e lote.
    - Alternância entre câmera traseira (`environment`) e frontal (`user`).
    - Suporte a upload de fotos da galeria ou arquivos (`input file`).
-   - Pré-processamento no Canvas (escala de cinza, realce de contraste e binarização) para ler caracteres impressos por jato de tinta (*inkjet dot-matrix*).
+   - Pré-processamento no Canvas (escala de cinza e realce de contraste) para ajudar na leitura de caracteres impressos por jato de tinta (*inkjet dot-matrix*).
    - Motor OCR com **Tesseract.js** em Português e Inglês com barra de progresso em tempo real.
    - Analisador Regex em Português para datas (`VAL: 15/08/2026`, `VENC: 10/26`, `VAL 28/02/2027`, `15 AGO 2026`, etc.) e lotes (`LOTE: AB1234`, `LT: 89341`, `L: 20240901`, etc.).
    - Modo de testes com fotos simuladas de embalagens (leite, café, remédio) para experimentação instantânea mesmo sem câmera física.
@@ -51,6 +51,7 @@ Aplicativo completo em **React 19**, **TypeScript** e **Tailwind CSS** para capt
 - **Tesseract.js 5** (OCR no navegador via Web Workers)
 - **SheetJS (xlsx)** (Geração de planilhas Excel)
 - **Lucide React** (Ícones)
+- **Vitest** (testes automatizados)
 
 ---
 
@@ -85,6 +86,22 @@ O servidor iniciará em `http://localhost:5173`.
 ```bash
 npm run build
 ```
+
+### 3. Executar os testes automatizados:
+```bash
+npm test
+```
+
+Os testes cobrem limites das faixas de validade, datas impossíveis, extração OCR de texto, catálogo e dígito verificador EAN-13, persistência local e o contrato HTTP usado para sincronização. A checagem de sintaxe da API é `npm --prefix server run check`.
+
+## Requisitos e Limitações por Funcionalidade
+
+- **Cadastro, pesquisa, alertas, filtros e exportação Excel/CSV** funcionam no navegador. Sem a API, os registros ficam somente no `localStorage` do navegador/perfil em uso; limpar os dados do site ou trocar de navegador/dispositivo não transfere os registros.
+- **Câmera** precisa de permissão do navegador e de um contexto seguro: HTTPS em dispositivos/rede ou `localhost` na própria máquina. Se não houver câmera ou permissão, use o envio de uma foto. A leitura de código por câmera depende de `BarcodeDetector`, disponível apenas em alguns navegadores; digitar o código continua disponível.
+- **OCR** roda no navegador com Tesseract.js. Na primeira leitura, o navegador precisa conseguir baixar os arquivos do worker e os idiomas Português/Inglês; bloqueios de rede, proxy ou política corporativa podem impedir essa etapa. A extração é uma sugestão e deve ser conferida antes de salvar.
+- **Fotos** são armazenadas como dados embutidos no registro, no `localStorage` e na API. Elas consomem espaço do navegador e aumentam o tamanho da lista sincronizada; o Nginx/API aceitam até 32 MB por requisição por padrão (`client_max_body_size` e `API_BODY_LIMIT`). Para muitas fotos, use uma solução de armazenamento de objetos antes de ampliar a operação.
+- **Persistência compartilhada e backup** precisam da stack Docker (MariaDB e Redis) e das variáveis de `.env.example`. `npm run dev` sem a API funciona em modo local; para sincronizar, inicie MariaDB/Redis e a API conforme as instruções acima. O endpoint atual substitui a lista completa, portanto não deve ser exposto como colaboração multiusuário concorrente sem controle de conflitos/autenticação.
+- **Acesso fora da máquina** exige HTTPS para a câmera e proteção de acesso à aplicação. O Compose de exemplo não configura TLS nem autenticação de usuários; não exponha diretamente à internet sem adicioná-los e trocar as credenciais de exemplo.
 
 ---
 

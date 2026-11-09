@@ -74,6 +74,7 @@ export const SpreadsheetTable: React.FC<SpreadsheetTableProps> = ({
       const info = getExpirationInfo(item.validade);
       if (filtroStatus === 'todos') return true;
       if (filtroStatus === 'alerta_6m') return info.requerAtencao6Meses;
+      if (filtroStatus === 'invalidas') return info.status === 'invalida';
       if (filtroStatus === 'vencidos') return info.status === 'vencido';
       if (filtroStatus === 'critico_30') return info.status === 'critico_30';
       if (filtroStatus === 'alerta_90') return info.status === 'alerta_90';

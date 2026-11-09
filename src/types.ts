@@ -1,4 +1,5 @@
 export type ExpirationStatus = 
+  | 'invalida'      // Data ausente ou fora do calendário
   | 'vencido'       // Dias restantes < 0
   | 'critico_30'    // <= 30 dias (1 mês)
   | 'alerta_90'     // 31 a 90 dias (1 a 3 meses)
@@ -42,4 +43,4 @@ export interface OCRResult {
   confianca?: number;
 }
 
-export type FilterStatusOption = 'todos' | 'alerta_6m' | 'vencidos' | 'critico_30' | 'alerta_90' | 'atencao_180' | 'seguro';
+export type FilterStatusOption = 'todos' | 'alerta_6m' | 'invalidas' | 'vencidos' | 'critico_30' | 'alerta_90' | 'atencao_180' | 'seguro';

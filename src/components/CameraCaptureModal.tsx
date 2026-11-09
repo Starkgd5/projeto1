@@ -14,7 +14,6 @@ export const CameraCaptureModal: React.FC<CameraCaptureModalProps> = ({
   onClose,
   onSuccess
 }) => {
-  const [stream, setStream] = useState<MediaStream | null>(null);
   const [cameraError, setCameraError] = useState<string | null>(null);
   const [facingMode, setFacingMode] = useState<'environment' | 'user'>('environment');
   const [capturedPhoto, setCapturedPhoto] = useState<string | null>(null);
@@ -27,6 +26,8 @@ export const CameraCaptureModal: React.FC<CameraCaptureModalProps> = ({
 
   const videoRef = useRef<HTMLVideoElement | null>(null);
   const fileInputRef = useRef<HTMLInputElement | null>(null);
+  const activeStreamRef = useRef<MediaStream | null>(null);
+  const cameraRequestIdRef = useRef(0);
 
   // Iniciar câmera quando o modal abrir
   useEffect(() => {
@@ -41,12 +42,10 @@ export const CameraCaptureModal: React.FC<CameraCaptureModalProps> = ({
   }, [isOpen, facingMode, capturedPhoto]);
 
   const startCamera = async () => {
+    stopCamera();
+    const requestId = cameraRequestIdRef.current;
     setCameraError(null);
     try {
-      if (stream) {
-        stream.getTracks().forEach(track => track.stop());
-      }
-
       if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
         throw new Error('Câmera não suportada neste navegador ou ambiente.');
       }
@@ -60,11 +59,17 @@ export const CameraCaptureModal: React.FC<CameraCaptureModalProps> = ({
         audio: false
       });
 
-      setStream(mediaStream);
+      if (requestId !== cameraRequestIdRef.current) {
+        mediaStream.getTracks().forEach(track => track.stop());
+        return;
+      }
+
+      activeStreamRef.current = mediaStream;
       if (videoRef.current) {
         videoRef.current.srcObject = mediaStream;
       }
     } catch (err: any) {
+      if (requestId !== cameraRequestIdRef.current) return;
       console.warn('Erro ao acessar a câmera:', err);
       setCameraError(
         'Não foi possível acessar a câmera do dispositivo. Verifique as permissões ou envie uma foto do arquivo/galeria.'
@@ -73,10 +78,10 @@ export const CameraCaptureModal: React.FC<CameraCaptureModalProps> = ({
   };
 
   const stopCamera = () => {
-    if (stream) {
-      stream.getTracks().forEach(track => track.stop());
-      setStream(null);
-    }
+    cameraRequestIdRef.current += 1;
+    activeStreamRef.current?.getTracks().forEach(track => track.stop());
+    activeStreamRef.current = null;
+    if (videoRef.current) videoRef.current.srcObject = null;
   };
 
   const toggleFacingMode = () => {
@@ -228,7 +233,6 @@ export const CameraCaptureModal: React.FC<CameraCaptureModalProps> = ({
   const handleTentarNovamente = () => {
     setCapturedPhoto(null);
     setOcrResult(null);
-    startCamera();
   };
 
   const handleFechar = () => {

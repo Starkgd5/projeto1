@@ -245,7 +245,7 @@ export function parseOcrText(text: string): {
 
   // Prioridade C: Formato MM/YYYY ou MM/YY isolado (ex: 12/26, 08/2027)
   if (!validadeDetectada) {
-    const monthYearRegex = /\b(0[1-9]|1[0-2])[\/\.\-](20\d{2}|\d{2})\b/;
+    const monthYearRegex = /(?<![\d/.-])(0[1-9]|1[0-2])[\/\.\-](20\d{2}|\d{2})\b/;
     const myMatch = cleanText.match(monthYearRegex);
     if (myMatch) {
       const parsed = parseDateString(myMatch[0]);
@@ -279,7 +279,7 @@ export function parseDateString(str: string): string | null {
     const ano = normalizarAno(dmyMatch[3]);
     const numDia = parseInt(dia, 10);
     const numMes = parseInt(mes, 10);
-    if (numMes >= 1 && numMes <= 12 && numDia >= 1 && numDia <= 31) {
+    if (isValidDate(Number(ano), numMes, numDia)) {
       return `${ano}-${mes}-${dia}`;
     }
   }
@@ -307,7 +307,9 @@ export function parseDateString(str: string): string | null {
         if (digits.length >= 2) {
           const dia = digits[0].padStart(2, '0');
           const ano = normalizarAno(digits[1]);
-          return `${ano}-${mesNum}-${dia}`;
+          if (isValidDate(Number(ano), Number(mesNum), Number(dia))) {
+            return `${ano}-${mesNum}-${dia}`;
+          }
         } else if (digits.length === 1) {
           // Apenas o ano presente (ex: AGO/26)
           const ano = normalizarAno(digits[0]);
@@ -325,8 +327,17 @@ export function parseDateString(str: string): string | null {
     const ano = isoMatch[1];
     const mes = isoMatch[2].padStart(2, '0');
     const dia = isoMatch[3].padStart(2, '0');
-    return `${ano}-${mes}-${dia}`;
+    if (isValidDate(Number(ano), Number(mes), Number(dia))) {
+      return `${ano}-${mes}-${dia}`;
+    }
   }
 
   return null;
+}
+
+function isValidDate(year: number, month: number, day: number): boolean {
+  if (month < 1 || month > 12 || day < 1) return false;
+  const leapYear = year % 4 === 0 && (year % 100 !== 0 || year % 400 === 0);
+  const daysInMonth = [31, leapYear ? 29 : 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31];
+  return day <= daysInMonth[month - 1];
 }

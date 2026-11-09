@@ -16,6 +16,7 @@ export const AlertBanner: React.FC<AlertBannerProps> = ({
 }) => {
   // Estatísticas calculadas
   let countVencidos = 0;
+  let countInvalidas = 0;
   let countCritico30 = 0;
   let countAlerta90 = 0;
   let countAtencao180 = 0;
@@ -24,11 +25,12 @@ export const AlertBanner: React.FC<AlertBannerProps> = ({
 
   for (const item of itens) {
     const info = getExpirationInfo(item.validade);
-    if (info.status === 'vencido') countVencidos++;
+    if (info.status === 'invalida') countInvalidas++;
+    else if (info.status === 'vencido') countVencidos++;
     else if (info.status === 'critico_30') countCritico30++;
     else if (info.status === 'alerta_90') countAlerta90++;
     else if (info.status === 'atencao_180') countAtencao180++;
-    else countSeguro++;
+    else if (info.status === 'seguro') countSeguro++;
 
     if (info.requerAtencao6Meses) {
       countTotal6M++;
@@ -74,7 +76,7 @@ export const AlertBanner: React.FC<AlertBannerProps> = ({
       )}
 
       {/* Cards de Métricas e Categorias de Alerta */}
-      <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-2.5 sm:gap-3">
+      <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-7 gap-2.5 sm:gap-3">
         {/* Total Geral */}
         <button
           onClick={() => onSelecionarFiltro('todos')}
@@ -90,6 +92,19 @@ export const AlertBanner: React.FC<AlertBannerProps> = ({
           </div>
           <div className="text-2xl font-black">{itens.length}</div>
           <div className="text-[10px] mt-0.5 opacity-70">Todos os registros</div>
+        </button>
+
+        <button
+          onClick={() => onSelecionarFiltro('invalidas')}
+          className={`text-left p-3 rounded-xl border transition-all ${
+            filtroAtivo === 'invalidas'
+              ? 'bg-rose-700 text-white border-rose-700 shadow-md ring-2 ring-rose-700/20'
+              : 'bg-white text-rose-800 border-rose-200 hover:bg-rose-50'
+          }`}
+        >
+          <div className="text-xs font-semibold mb-1">Data inválida</div>
+          <div className="text-2xl font-black">{countInvalidas}</div>
+          <div className="text-[10px] mt-0.5 opacity-70">Revisar cadastro</div>
         </button>
 
         {/* 1. Vencidos */}
