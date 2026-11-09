@@ -1,101 +1,114 @@
 name: validadepro
 
 services:
-	db:
-		image: mariadb:11.4
-		restart: unless-stopped
-		environment:
-			MARIADB_DATABASE: ${MARIADB_DATABASE:?Configure MARIADB_DATABASE in .env}
-			MARIADB_USER: ${MARIADB_USER:?Configure MARIADB_USER in .env}
-			MARIADB_PASSWORD: ${MARIADB_PASSWORD:?Configure MARIADB_PASSWORD in .env}
-			MARIADB_ROOT_PASSWORD: ${MARIADB_ROOT_PASSWORD:?Configure MARIADB_ROOT_PASSWORD in .env}
-		volumes:
-			- mariadb_data:/var/lib/mysql
-			- ./server/schema.sql:/docker-entrypoint-initdb.d/001-schema.sql:ro
-		healthcheck:
-			test: ["CMD", "healthcheck.sh", "--connect", "--innodb_initialized"]
-			interval: 10s
-			timeout: 5s
-			retries: 10
-			start_period: 30s
-		networks:
-			- backend
+  db:
+    image: mariadb:11.4
+    restart: unless-stopped
+    environment:
+      MARIADB_DATABASE: ${MARIADB_DATABASE:?Configure MARIADB_DATABASE in .env}
+      MARIADB_USER: ${MARIADB_USER:?Configure MARIADB_USER in .env}
+      MARIADB_PASSWORD: ${MARIADB_PASSWORD:?Configure MARIADB_PASSWORD in .env}
+      MARIADB_ROOT_PASSWORD: ${MARIADB_ROOT_PASSWORD:?Configure MARIADB_ROOT_PASSWORD in .env}
+    volumes:
+      - mariadb_data:/var/lib/mysql
+      - ./server/schema.sql:/docker-entrypoint-initdb.d/001-schema.sql:ro
+    healthcheck:
+      test: ["CMD", "healthcheck.sh", "--connect", "--innodb_initialized"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+      start_period: 30s
+    networks:
+      - backend
 
-	redis:
-		image: redis:7.4-alpine
-		restart: unless-stopped
-		command: ["redis-server", "--appendonly", "yes", "--requirepass", "${REDIS_PASSWORD:?Configure REDIS_PASSWORD in .env}"]
-		volumes:
-			- redis_data:/data
-		healthcheck:
-			test: ["CMD-SHELL", "redis-cli -a '$$REDIS_PASSWORD' ping | grep -q PONG"]
-			interval: 10s
-			timeout: 5s
-			retries: 10
-			start_period: 10s
-		environment:
-			REDIS_PASSWORD: ${REDIS_PASSWORD:?Configure REDIS_PASSWORD in .env}
-		networks:
-			- backend
+  redis:
+    image: redis:7.4-alpine
+    restart: unless-stopped
+    command:
+      [
+        "redis-server",
+        "--appendonly",
+        "yes",
+        "--requirepass",
+        "${REDIS_PASSWORD:?Configure REDIS_PASSWORD in .env}",
+      ]
+    volumes:
+      - redis_data:/data
+    healthcheck:
+      test: ["CMD-SHELL", "redis-cli -a '$$REDIS_PASSWORD' ping | grep -q PONG"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+      start_period: 10s
+    environment:
+      REDIS_PASSWORD: ${REDIS_PASSWORD:?Configure REDIS_PASSWORD in .env}
+    networks:
+      - backend
 
-	api:
-		build:
-			context: ./server
-			dockerfile: Dockerfile
-		restart: unless-stopped
-		init: true
-		environment:
-			NODE_ENV: production
-			PORT: 3000
-			API_BODY_LIMIT: 32mb
-			DB_HOST: db
-			DB_PORT: 3306
-			DB_NAME: ${MARIADB_DATABASE:?Configure MARIADB_DATABASE in .env}
-			DB_USER: ${MARIADB_USER:?Configure MARIADB_USER in .env}
-			DB_PASSWORD: ${MARIADB_PASSWORD:?Configure MARIADB_PASSWORD in .env}
-			REDIS_URL: redis://:${REDIS_PASSWORD:?Configure REDIS_PASSWORD in .env}@redis:6379
-		depends_on:
-			db:
-				condition: service_healthy
-			redis:
-				condition: service_healthy
-		healthcheck:
-			test: ["CMD", "node", "-e", "fetch('http://127.0.0.1:3000/api/health').then((r) => process.exit(r.ok ? 0 : 1)).catch(() => process.exit(1))"]
-			interval: 15s
-			timeout: 5s
-			retries: 5
-			start_period: 20s
-		security_opt:
-			- no-new-privileges:true
-		networks:
-			- backend
+  api:
+    build:
+      context: ./server
+      dockerfile: Dockerfile
+    restart: unless-stopped
+    init: true
+    environment:
+      NODE_ENV: production
+      PORT: 3000
+      API_BODY_LIMIT: 32mb
+      DB_HOST: db
+      DB_PORT: 3306
+      DB_NAME: ${MARIADB_DATABASE:?Configure MARIADB_DATABASE in .env}
+      DB_USER: ${MARIADB_USER:?Configure MARIADB_USER in .env}
+      DB_PASSWORD: ${MARIADB_PASSWORD:?Configure MARIADB_PASSWORD in .env}
+      REDIS_URL: redis://:${REDIS_PASSWORD:?Configure REDIS_PASSWORD in .env}@redis:6379
+    depends_on:
+      db:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    healthcheck:
+      test:
+        [
+          "CMD",
+          "node",
+          "-e",
+          "fetch('http://127.0.0.1:3000/api/health').then((r) => process.exit(r.ok ? 0 : 1)).catch(() => process.exit(1))",
+        ]
+      interval: 15s
+      timeout: 5s
+      retries: 5
+      start_period: 20s
+    security_opt:
+      - no-new-privileges:true
+    networks:
+      - backend
 
-	nginx:
-		build:
-			context: .
-			dockerfile: Dockerfile
-		restart: unless-stopped
-		depends_on:
-			api:
-				condition: service_healthy
-		ports:
-			- "${APP_BIND_ADDRESS:-0.0.0.0}:${APP_PORT:-8080}:80"
-		healthcheck:
-			test: ["CMD", "wget", "-q", "--spider", "http://127.0.0.1/healthz"]
-			interval: 15s
-			timeout: 5s
-			retries: 3
-			start_period: 5s
-		networks:
-			- frontend
-			- backend
+  nginx:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    restart: unless-stopped
+    depends_on:
+      api:
+        condition: service_healthy
+    ports:
+      - "${APP_BIND_ADDRESS:-0.0.0.0}:${APP_PORT:-8080}:80"
+    healthcheck:
+      test: ["CMD", "wget", "-q", "--spider", "http://127.0.0.1/healthz"]
+      interval: 15s
+      timeout: 5s
+      retries: 3
+      start_period: 5s
+    networks:
+      - frontend
+      - backend
 
 volumes:
-	mariadb_data:
-	redis_data:
+  mariadb_data:
+  redis_data:
 
 networks:
-	frontend:
-		internal: true
-	backend:
-		internal: true
+  frontend:
+    internal: true
+  backend:
+    internal: true
